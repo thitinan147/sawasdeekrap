@@ -1,299 +1,194 @@
-// ================================================
-// Valentine's Day Gift - Interactive Script
-// ================================================
+// Prize data
+const prizes = [
+  {
+    icon: '🌹',
+    title: 'กุหลาบ',
+    description: 'ดอกไม้งดงาม',
+    message: '<p>กุหลาบดอกนี้</p><p>ขอมอบให้คุณนะ</p>',
+    color: ['#E1BEE7', '#CE93D8']
+  },
+  {
+    icon: '🍫',
+    title: 'ช็อคโกแลต',
+    description: 'หวานอร่อย',
+    message: '<p>ช็อคโกแลตแท่งนี้</p><p>เอาไว้เต็มน้ำตาลตอนขึ้นเวรนะ</p>',
+    color: ['#B3E5FC', '#81D4FA']
+  },
+  {
+    icon: '📸',
+    title: 'รูปถ่ายระดับชาติ',
+    description: 'ถ่ายโดยช่างภาพมืออาชีพ',
+    message: '<p>เป็นรูปคุณตอนยิ้ม</p><p>ขอโทษทีที่แอบถ่ายตอนไม่รู้ตัว</p>',
+    color: ['#C8E6C9', '#A5D6A7']
+  },
+];
 
-// Prize emojis
-const prizes = ['🌹', '🍫', '🧸', '🧁', '🍬'];
+// State
+let currentPrizeIndex = 0;
+let shuffledPrizes = [];
+let isSpinning = false;
+let remainingPrizes = 0;
 
-// DOM Elements
-const heartsContainer = document.getElementById('heartsContainer');
-const giftSection = document.getElementById('giftSection');
-const giftBox = document.getElementById('giftBox');
-const openBtn = document.getElementById('openBtn');
-const drumSection = document.getElementById('drumSection');
-const drumStrip = document.getElementById('drumStrip');
-const spinningText = document.getElementById('spinningText');
-const resultSection = document.getElementById('resultSection');
-const prizeDisplay = document.getElementById('prizeDisplay');
-const replayBtn = document.getElementById('replayBtn');
+// DOM elements
+const capsulesContainer = document.getElementById('capsulesContainer');
+const gachaKnob = document.getElementById('gachaKnob');
+const prizeCapsule = document.getElementById('prizeCapsule');
+const prizeIcon = document.getElementById('prizeIcon');
+const tapHint = document.getElementById('tapHint');
+const prizeCard = document.getElementById('prizeCard');
+const cardEmoji = document.getElementById('cardEmoji');
+const cardTitle = document.getElementById('cardTitle');
+const cardDescription = document.getElementById('cardDescription');
+const cardMessage = document.getElementById('cardMessage');
+const btnAgain = document.getElementById('btnAgain');
+const finalMessage = document.getElementById('finalMessage');
+const remainingCount = document.getElementById('remainingCount');
 
-// ================================================
-// Falling Hearts Background Animation
-// ================================================
+// Initialize
+function init() {
+  shuffledPrizes = [...prizes];
+  remainingPrizes = shuffledPrizes.length;
+  updateRemainingCount();
+  createMiniCapsules();
+}
 
-function createFallingHeart() {
-    const heart = document.createElement('div');
-    heart.className = 'falling-heart';
-    heart.textContent = ['❤️', '💕', '💗', '💖', '💝'][Math.floor(Math.random() * 5)];
+function createMiniCapsules() {
+  const colors = [
+    ['#FFCDD2', '#EF9A9A'],
+    ['#B3E5FC', '#81D4FA'],
+    ['#C8E6C9', '#A5D6A7'],
+    ['#FFE0B2', '#FFCC80'],
+    ['#E1BEE7', '#CE93D8'],
+    ['#F8BBD9', '#F48FB1']
+  ];
 
-    // Random horizontal position
-    heart.style.left = Math.random() * 100 + '%';
+  for (let i = 0; i < 12; i++) {
+    const capsule = document.createElement('div');
+    capsule.className = 'capsule-mini';
+    capsule.style.background = `linear-gradient(145deg, ${colors[i % colors.length][0]}, ${colors[i % colors.length][1]})`;
+    capsule.style.left = `${10 + (i % 4) * 25}%`;
+    capsule.style.top = `${10 + Math.floor(i / 4) * 30}%`;
+    capsule.style.animationDelay = `${i * 0.2}s`;
+    capsulesContainer.appendChild(capsule);
+  }
+}
 
-    // Random size
-    const size = 1 + Math.random() * 1.5;
-    heart.style.fontSize = size + 'rem';
+function updateRemainingCount() {
+  if (remainingPrizes > 0) {
+    remainingCount.textContent = `เหลืออีก ${remainingPrizes} รางวัล`;
+  } else {
+    remainingCount.textContent = 'หมดแล้ว!';
+  }
+}
 
-    // Random duration
-    const duration = 6 + Math.random() * 8;
-    heart.style.animationDuration = duration + 's';
+// Spin gacha
+function spinGacha() {
+  if (isSpinning || remainingPrizes <= 0) return;
+  isSpinning = true;
 
-    heartsContainer.appendChild(heart);
+  gachaKnob.classList.add('spinning');
 
-    // Remove heart after animation completes
+  setTimeout(() => {
+    gachaKnob.classList.remove('spinning');
+    showCapsule();
+  }, 800);
+}
+
+function showCapsule() {
+  const prize = shuffledPrizes[currentPrizeIndex];
+
+  prizeCapsule.style.setProperty('--capsule-top', prize.color[0]);
+  prizeCapsule.style.setProperty('--capsule-bottom', prize.color[1]);
+  prizeCapsule.querySelector('.capsule-top').style.background =
+    `linear-gradient(145deg, ${prize.color[0]}, ${prize.color[1]})`;
+
+  prizeIcon.textContent = prize.icon;
+
+  prizeCapsule.classList.remove('opened');
+  prizeCapsule.classList.add('visible', 'bounce');
+  tapHint.classList.add('visible');
+
+  setTimeout(() => {
+    prizeCapsule.classList.remove('bounce');
+    isSpinning = false;
+  }, 600);
+}
+
+function openCapsule() {
+  if (prizeCapsule.classList.contains('opened')) return;
+
+  prizeCapsule.classList.add('opened');
+  tapHint.classList.remove('visible');
+
+  setTimeout(() => {
+    showPrizeCard();
+  }, 500);
+}
+
+function showPrizeCard() {
+  const prize = shuffledPrizes[currentPrizeIndex];
+
+  cardEmoji.textContent = prize.icon;
+  cardTitle.textContent = prize.title;
+  cardDescription.textContent = prize.description;
+  cardMessage.innerHTML = prize.message;
+
+  prizeCard.classList.add('visible');
+}
+
+function closePrizeCard() {
+  prizeCard.classList.remove('visible');
+
+  setTimeout(() => {
+    prizeCapsule.classList.remove('visible', 'opened');
+  }, 300);
+}
+
+function nextPrize() {
+  currentPrizeIndex++;
+  remainingPrizes--;
+  updateRemainingCount();
+
+  closePrizeCard();
+
+  if (remainingPrizes <= 0) {
     setTimeout(() => {
-        heart.remove();
-    }, duration * 1000);
+      showFinalMessage();
+    }, 500);
+  }
 }
 
-// Create hearts periodically
-setInterval(createFallingHeart, 500);
-
-// Create initial hearts
-for (let i = 0; i < 10; i++) {
-    setTimeout(createFallingHeart, i * 200);
+function showFinalMessage() {
+  finalMessage.classList.add('visible');
 }
 
-// ================================================
-// Initialize Drum Strip
-// ================================================
+// Event listeners
+gachaKnob.addEventListener('click', spinGacha);
 
-function initDrumStrip() {
-    // Create repeated prize items for smooth spinning
-    // We need enough items to create a seamless loop
-    const repeatCount = 20; // Number of times to repeat the prize array
-
-    for (let i = 0; i < repeatCount; i++) {
-        prizes.forEach(prize => {
-            const item = document.createElement('div');
-            item.className = 'drum-item';
-            item.textContent = prize;
-            item.dataset.prize = prize;
-            drumStrip.appendChild(item);
-        });
-    }
-}
-
-initDrumStrip();
-
-// ================================================
-// Open Gift Box - Start Spinning
-// ================================================
-
-openBtn.addEventListener('click', () => {
-    // Add opened class to gift box
-    giftBox.classList.add('opened');
-
-    // Disable button
-    openBtn.disabled = true;
-    openBtn.style.opacity = '0.5';
-    openBtn.style.cursor = 'not-allowed';
-
-    // Play small confetti
-    triggerConfetti();
-
-    // Transition to drum section after gift opens
-    setTimeout(() => {
-        giftSection.classList.add('fade-out');
-
-        setTimeout(() => {
-            giftSection.classList.add('hidden');
-            drumSection.classList.remove('hidden');
-
-            // Start spinning animation
-            startSpin();
-        }, 500);
-    }, 600);
+prizeCapsule.addEventListener('click', () => {
+  if (prizeCapsule.classList.contains('visible') && !prizeCapsule.classList.contains('opened')) {
+    openCapsule();
+  }
 });
 
-// ================================================
-// Spinning Drum Logic
-// ================================================
+btnAgain.addEventListener('click', nextPrize);
 
-function startSpin() {
-    // Select random prize
-    const randomPrize = prizes[Math.floor(Math.random() * prizes.length)];
-
-    // Calculate position
-    const itemWidth = 112; // Width of each drum item in pixels
-    const containerWidth = drumSection.querySelector('.drum-window').offsetWidth;
-    const items = drumStrip.querySelectorAll('.drum-item');
-
-    // Find a random instance of the selected prize
-    const matchingItems = Array.from(items).filter(item => item.dataset.prize === randomPrize);
-    const targetItem = matchingItems[Math.floor(Math.random() * matchingItems.length)];
-
-    // Calculate target position (center the selected item)
-    const itemIndex = Array.from(items).indexOf(targetItem);
-    const targetPosition = -(itemIndex * itemWidth) + (containerWidth / 2) - (itemWidth / 2);
-
-    // Add some extra rotations for visual effect
-    const extraRotations = items.length * itemWidth * (2 + Math.floor(Math.random() * 3));
-    const finalPosition = targetPosition - extraRotations;
-
-    // Start spinning animation
-    let currentPosition = 0;
-    const spinDuration = 4000; // 4 seconds
-    const startTime = Date.now();
-    const startPosition = 0;
-
-    // Initial fast spin
-    let spinSpeed = 50;
-
-    function animateSpin() {
-        const elapsed = Date.now() - startTime;
-        const progress = Math.min(elapsed / spinDuration, 1);
-
-        // Easing function for smooth slowdown
-        const easedProgress = 1 - Math.pow(1 - progress, 3); // Ease out cubic
-
-        currentPosition = startPosition + (finalPosition * easedProgress);
-        drumStrip.style.transform = `translateX(${currentPosition}px)`;
-
-        if (progress < 1) {
-            requestAnimationFrame(animateSpin);
-        } else {
-            // Spin complete
-            setTimeout(() => {
-                showResult(randomPrize);
-            }, 300);
-        }
-    }
-
-    animateSpin();
-}
-
-// ================================================
-// Show Result
-// ================================================
-
-function showResult(prize) {
-    // Hide drum section
-    drumSection.classList.add('hidden');
-
-    // Show result section
-    resultSection.classList.remove('hidden');
-
-    // Display prize
-    prizeDisplay.textContent = prize;
-
-    // Trigger celebration confetti
-    triggerBigConfetti();
-}
-
-// ================================================
-// Replay Functionality
-// ================================================
-
-replayBtn.addEventListener('click', () => {
-    // Hide result section
-    resultSection.classList.add('hidden');
-
-    // Show drum section
-    drumSection.classList.remove('hidden');
-
-    // Reset drum position
-    drumStrip.style.transition = 'none';
-    drumStrip.style.transform = 'translateX(0)';
-
-    // Start spinning again
-    setTimeout(() => {
-        drumStrip.style.transition = 'transform 0.1s linear';
-        startSpin();
-    }, 100);
+// Keyboard support
+gachaKnob.addEventListener('keydown', (e) => {
+  if (e.key === 'Enter' || e.key === ' ') {
+    e.preventDefault();
+    spinGacha();
+  }
 });
 
-// ================================================
-// Confetti Effects
-// ================================================
-
-function triggerConfetti() {
-    confetti({
-        particleCount: 50,
-        spread: 70,
-        origin: { y: 0.6 },
-        colors: ['#ff4d6d', '#ffcad4', '#ffb3c1', '#c9184a', '#ffd700']
-    });
-}
-
-function triggerBigConfetti() {
-    // Multiple bursts for celebration effect
-    const duration = 3000;
-    const end = Date.now() + duration;
-
-    (function frame() {
-        // Launch confetti from left and right
-        confetti({
-            particleCount: 5,
-            angle: 60,
-            spread: 55,
-            origin: { x: 0 },
-            colors: ['#ff4d6d', '#ffcad4', '#ffb3c1', '#c9184a', '#ffd700']
-        });
-
-        confetti({
-            particleCount: 5,
-            angle: 120,
-            spread: 55,
-            origin: { x: 1 },
-            colors: ['#ff4d6d', '#ffcad4', '#ffb3c1', '#c9184a', '#ffd700']
-        });
-
-        // Heart-shaped confetti
-        confetti({
-            particleCount: 3,
-            spread: 70,
-            origin: { y: 0.6 },
-            shapes: ['heart'],
-            colors: ['#ff4d6d', '#c9184a'],
-            scalar: 2
-        });
-
-        if (Date.now() < end) {
-            requestAnimationFrame(frame);
-        }
-    }());
-
-    // Final big burst
-    setTimeout(() => {
-        confetti({
-            particleCount: 100,
-            spread: 100,
-            origin: { y: 0.5 },
-            colors: ['#ff4d6d', '#ffcad4', '#ffb3c1', '#c9184a', '#ffd700'],
-            shapes: ['circle', 'heart'],
-            scalar: 1.5
-        });
-    }, 200);
-}
-
-// ================================================
-// Tap for Hearts Effect (Additional Fun)
-// ================================================
-
-document.addEventListener('click', (e) => {
-    // Don't trigger on buttons
-    if (e.target.closest('button')) return;
-
-    confetti({
-        particleCount: 8,
-        spread: 50,
-        origin: {
-            x: e.clientX / window.innerWidth,
-            y: e.clientY / window.innerHeight
-        },
-        shapes: ['heart'],
-        colors: ['#ff4d6d', '#ffcad4', '#c9184a'],
-        scalar: 1.5,
-        zIndex: 9999
-    });
+prizeCapsule.setAttribute('tabindex', '0');
+prizeCapsule.setAttribute('role', 'button');
+prizeCapsule.addEventListener('keydown', (e) => {
+  if (e.key === 'Enter' || e.key === ' ') {
+    e.preventDefault();
+    openCapsule();
+  }
 });
 
-// ================================================
-// Gift Box Click (Alternative to Button)
-// ================================================
-
-giftBox.addEventListener('click', () => {
-    if (!openBtn.disabled) {
-        openBtn.click();
-    }
-});
+// Initialize
+init();
