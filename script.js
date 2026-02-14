@@ -24,10 +24,9 @@ const prizes = [
 ];
 
 // State
-let currentPrizeIndex = 0;
-let shuffledPrizes = [];
+let hasPlayed = false;
+let selectedPrize = null;
 let isSpinning = false;
-let remainingPrizes = 0;
 
 // DOM elements
 const capsulesContainer = document.getElementById('capsulesContainer');
@@ -40,15 +39,13 @@ const cardEmoji = document.getElementById('cardEmoji');
 const cardTitle = document.getElementById('cardTitle');
 const cardDescription = document.getElementById('cardDescription');
 const cardMessage = document.getElementById('cardMessage');
-const btnAgain = document.getElementById('btnAgain');
+const btnFinish = document.getElementById('btnFinish');
 const finalMessage = document.getElementById('finalMessage');
-const remainingCount = document.getElementById('remainingCount');
 
 // Initialize
 function init() {
-  shuffledPrizes = [...prizes];
-  remainingPrizes = shuffledPrizes.length;
-  updateRemainingCount();
+  // Random prize once at start
+  selectedPrize = prizes[Math.floor(Math.random() * prizes.length)];
   createMiniCapsules();
 }
 
@@ -73,36 +70,27 @@ function createMiniCapsules() {
   }
 }
 
-function updateRemainingCount() {
-  if (remainingPrizes > 0) {
-    remainingCount.textContent = `เหลืออีก ${remainingPrizes} รางวัล`;
-  } else {
-    remainingCount.textContent = 'หมดแล้ว!';
-  }
-}
-
 // Spin gacha
 function spinGacha() {
-  if (isSpinning || remainingPrizes <= 0) return;
+  if (isSpinning || hasPlayed) return;
+  
   isSpinning = true;
+  hasPlayed = true;
 
   gachaKnob.classList.add('spinning');
 
   setTimeout(() => {
     gachaKnob.classList.remove('spinning');
+    gachaKnob.classList.add('disabled');
     showCapsule();
   }, 800);
 }
 
 function showCapsule() {
-  const prize = shuffledPrizes[currentPrizeIndex];
-
-  prizeCapsule.style.setProperty('--capsule-top', prize.color[0]);
-  prizeCapsule.style.setProperty('--capsule-bottom', prize.color[1]);
   prizeCapsule.querySelector('.capsule-top').style.background =
-    `linear-gradient(145deg, ${prize.color[0]}, ${prize.color[1]})`;
+    `linear-gradient(145deg, ${selectedPrize.color[0]}, ${selectedPrize.color[1]})`;
 
-  prizeIcon.textContent = prize.icon;
+  prizeIcon.textContent = selectedPrize.icon;
 
   prizeCapsule.classList.remove('opened');
   prizeCapsule.classList.add('visible', 'bounce');
@@ -126,12 +114,10 @@ function openCapsule() {
 }
 
 function showPrizeCard() {
-  const prize = shuffledPrizes[currentPrizeIndex];
-
-  cardEmoji.textContent = prize.icon;
-  cardTitle.textContent = prize.title;
-  cardDescription.textContent = prize.description;
-  cardMessage.innerHTML = prize.message;
+  cardEmoji.textContent = selectedPrize.icon;
+  cardTitle.textContent = selectedPrize.title;
+  cardDescription.textContent = selectedPrize.description;
+  cardMessage.innerHTML = selectedPrize.message;
 
   prizeCard.classList.add('visible');
 }
@@ -141,21 +127,8 @@ function closePrizeCard() {
 
   setTimeout(() => {
     prizeCapsule.classList.remove('visible', 'opened');
+    showFinalMessage();
   }, 300);
-}
-
-function nextPrize() {
-  currentPrizeIndex++;
-  remainingPrizes--;
-  updateRemainingCount();
-
-  closePrizeCard();
-
-  if (remainingPrizes <= 0) {
-    setTimeout(() => {
-      showFinalMessage();
-    }, 500);
-  }
 }
 
 function showFinalMessage() {
@@ -171,7 +144,7 @@ prizeCapsule.addEventListener('click', () => {
   }
 });
 
-btnAgain.addEventListener('click', nextPrize);
+btnFinish.addEventListener('click', closePrizeCard);
 
 // Keyboard support
 gachaKnob.addEventListener('keydown', (e) => {
